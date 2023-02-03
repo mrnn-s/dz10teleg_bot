@@ -6,7 +6,7 @@ from loader import dp
 max_count = 150
 total = 0
 new_game = False
-duel = []
+duel = [] # id - мой и оппонента
 first = 0
 current = 0
 
@@ -17,7 +17,8 @@ async def mes_start(message: types.Message):
     await message.answer(f'{name}, привет! Сегодня сыграем с тобой в конфеты! Для начала игры введи команду /new_game. '
                          f'Для настройки конфет введи команду /set и укажи количество конфет\n'
                          f'Или /duel и id оппонента, для игры вдвоем')
-    print(message.from_user.id)
+    print(message.from_user.id) # приходит id кто тыкнул старт
+    await message.answer(f' твой id {message.from_user.id}') # приходит id кто тыкнул старт
 
 
 @dp.message_handler(commands=['new_game'])
@@ -67,12 +68,12 @@ async def mes_set(message: types.Message):
     if not new_game:
         if count.isdigit():
             max_count = int(count)
-            await message.answer(f'Конфет теперь будет {max_count} ')
+            await message.answer(f'Теперь конфет в игре будет {max_count}, жми /new_game или /duel и укажи id оппонента через пробел') #меняем кол во конфет 
         else:
             await message.answer(f'{name}, напишите цифрами')
     else:
         await message.answer(f'{name}, нельзя менять правила во время игры')
-
+        
 
 @dp.message_handler()
 async def mes_take_candy(message: types.Message):
