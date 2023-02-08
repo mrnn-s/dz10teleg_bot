@@ -14,11 +14,12 @@ current = 0
 @dp.message_handler(commands=['start', 'старт'])
 async def mes_start(message: types.Message):
     name = message.from_user.first_name
-    await message.answer(f'{name}, привет! Сегодня сыграем с тобой в конфеты! Для начала игры введи команду /new_game. '
-                         f'Для настройки конфет введи команду /set и укажи количество конфет\n'
+    await message.answer(f'{name}, привет! Сегодня сыграем с тобой в конфеты! Для начала игры введи команду /new_game.' 
+                         f'за ход можно взяять от 1 до 28 конфент'
+                         f'Для настройки конфет введи команду /set и укажи количество конфет и только один раз,во время игры менять количество конфет нельзя!\n'
                          f'Или /duel и id оппонента, для игры вдвоем')
-    print(message.from_user.id) # приходит id кто тыкнул старт
-    await message.answer(f' твой id {message.from_user.id}') # приходит id кто тыкнул старт
+    print({message.from_user.id},{name}) # приходит id кто тыкнул старт
+    await message.answer(f'{name} твой id {message.from_user.id}') # приходит id  после старт
 
 
 @dp.message_handler(commands=['new_game'])
@@ -40,23 +41,28 @@ async def mes_new_game(message: types.Message):
 @dp.message_handler(commands=['duel'])
 async def mes_duel(message: types.Message):
     global new_game
-    global total
     global max_count
+    global total
     global duel
-    global first
+    global first_turn
     global current
-    duel.append(int(message.from_user.id))
-    duel.append(int(message.text.split()[1]))
-    total = max_count
-    first = random.randint(0,1)
-    if first:
-        await dp.bot.send_message(duel[0], 'Первый ход за тобой, бери конфеты')
-        await dp.bot.send_message(duel[1], 'Первый ход за твоим противником! Жди своего хода')
+    player = int(message.from_user.id)
+    duel.append(player) # мой id (кто вызвал на поединок)
+    if len(message.text.split()) > 1:  #обработка на ошибку "Если после /duel не ввели id оппонента"
+        opponent = int(message.text.split()[1]) # добавляем split()[1] правую часть команды /duel id
+        duel.append(opponent) # id оппонента
+        total = max_count
+        first_turn = random.randint(0,1)
+        if first_turn:
+            await dp.bot.send_message(duel[0], f'Первый ход за тобой! Бери конфеты (от 1 до 28)')
+            await dp.bot.send_message(duel[1], f'Первый ход за твоим противником. Жди своего хода.')
+        else: 
+            await dp.bot.send_message(duel[1], f'Первый ход за тобой! Бери конфеты (от 1 до 28)')
+            await dp.bot.send_message(duel[0], f'Первый ход за твоим противником. Жди своего хода.')
+        current = duel[0] if first_turn ==1 else duel[1]
+        new_game = True
     else:
-        await dp.bot.send_message(duel[1], 'Первый ход за тобой, бери конфеты')
-        await dp.bot.send_message(duel[0], 'Первый ход за твоим противником! Жди своего хода')
-    current = duel[0] if first else duel[1]
-    new_game = True
+        await message.answer(f'Введи команду /duel и укажи id оппонента через пробел или сыграй с ботом для этого жми /new_game ')
 
 
 @dp.message_handler(commands=['set'])
@@ -64,15 +70,19 @@ async def mes_set(message: types.Message):
     global max_count
     global new_game
     name = message.from_user.first_name
-    count = message.text.split()[1]
-    if not new_game:
-        if count.isdigit():
-            max_count = int(count)
-            await message.answer(f'Теперь конфет в игре будет {max_count}, жми /new_game или /duel и укажи id оппонента через пробел') #меняем кол во конфет 
+    if len(message.text.split()) > 1:  # обработка на ошибку "Если после /set не ввели количество"
+        count = message.text.split()[1]
+        if not new_game:
+            if count.isdigit():
+                max_count = int(count)
+                await message.answer(f'Теперь конфет в игре будет {max_count}, жми /new_game или /duel и укажи id оппонента через пробел')
+            else:
+                await message.answer(f'{name}, напиши цифрами')
         else:
-            await message.answer(f'{name}, напишите цифрами')
+            await message.answer(f'{name}, ЭЭЭ нельзя менять правила во время игры.КОНФЕТЫ НЕ МЕНЯЕМ')
     else:
-        await message.answer(f'{name}, нельзя менять правила во время игры')
+        await message.answer(f'После команды /set НАПИШИ КОЛИЧЕСТВО КОНФЕТ один раз,или же доиграй игру просто вводя количество конфет от 1 до 28')
+
         
 
 @dp.message_handler()
